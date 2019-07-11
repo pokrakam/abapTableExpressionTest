@@ -1,0 +1,132 @@
+REPORT zTableExpressionTest.
+
+PARAMETERS p_count TYPE i DEFAULT 10000000.
+
+CLASS lcl_test DEFINITION.
+  PUBLIC SECTION.
+    METHODS nop IMPORTING i TYPE i.
+    METHODS eval IMPORTING i TYPE i.
+    METHODS copy IMPORTING i TYPE i.
+ENDCLASS.
+
+CLASS lcl_test IMPLEMENTATION.
+  METHOD nop.
+  ENDMETHOD.
+  METHOD eval.
+    IF i = 1.
+    ENDIF.
+  ENDMETHOD.
+  METHOD copy.
+    DATA(n) = i.
+    n = n + 1.
+  ENDMETHOD.
+ENDCLASS.
+
+*--------------------------------------------------------------------*
+START-OF-SELECTION.
+*--------------------------------------------------------------------*
+
+  TYPES: BEGIN OF struct,
+           key TYPE c,
+           val TYPE i,
+         END OF struct.
+  DATA itab TYPE STANDARD TABLE OF struct WITH EMPTY KEY.
+
+  TRY.
+      DATA(random) = cl_abap_random_int=>create(
+                 seed = cl_abap_random=>seed( )
+                 min  = 0
+                 max  = 1 ).
+    CATCH cx_abap_random INTO DATA(error).
+      MESSAGE error->get_text( ) TYPE 'E'.
+  ENDTRY.
+
+  DO p_count TIMES.
+    APPEND VALUE #( key = 'A' val = random->get_next( ) ) TO itab.
+  ENDDO.
+
+  DATA i TYPE i.
+
+  GET RUN TIME FIELD DATA(start).
+  DO p_count TIMES.
+    i = itab[ sy-index ]-val.
+  ENDDO.
+  GET RUN TIME FIELD DATA(end).
+  DATA(elapsed) = end - start.
+  WRITE / |i = itab[ sy-index ]-val.                   { elapsed NUMBER = USER }|.
+
+  GET RUN TIME FIELD start.
+  DO p_count TIMES.
+    i = VALUE #( itab[ sy-index ]-val ).
+  ENDDO.
+  GET RUN TIME FIELD end.
+  elapsed = end - start.
+*  WRITE elapsed.
+  WRITE / |i = VALUE #( itab[ sy-index ]-val ).        { elapsed NUMBER = USER }|.
+
+  GET RUN TIME FIELD start.
+  DO p_count TIMES.
+    IF itab[ sy-index ]-val = 1.
+    ENDIF.
+  ENDDO.
+  GET RUN TIME FIELD end.
+  elapsed = end - start.
+  WRITE / |IF itab[ sy-index ]-val = 1.                { elapsed NUMBER = USER }|.
+
+  GET RUN TIME FIELD start.
+  DO p_count TIMES.
+    IF VALUE #( itab[ sy-index ]-val ) = 1.
+    ENDIF.
+  ENDDO.
+  GET RUN TIME FIELD end.
+  elapsed = end - start.
+  WRITE / |IF VALUE #( itab[ sy-index ]-val ) = 1.     { elapsed NUMBER = USER }|.
+
+  DATA(o) = NEW lcl_test( ).
+  GET RUN TIME FIELD start.
+  DO p_count TIMES.
+    o->nop( itab[ sy-index ]-val ).
+  ENDDO.
+  GET RUN TIME FIELD end.
+  elapsed = end - start.
+  WRITE / |o->nop( itab[ sy-index ]-val ).             { elapsed NUMBER = USER }|.
+
+  GET RUN TIME FIELD start.
+  DO p_count TIMES.
+    o->nop( VALUE #( itab[ sy-index ]-val ) ).
+  ENDDO.
+  GET RUN TIME FIELD end.
+  elapsed = end - start.
+  WRITE / |o->nop( value #( itab[ sy-index ]-val ) ).  { elapsed NUMBER = USER }|.
+
+  GET RUN TIME FIELD start.
+  DO p_count TIMES.
+    o->eval( itab[ sy-index ]-val ).
+  ENDDO.
+  GET RUN TIME FIELD end.
+  elapsed = end - start.
+  WRITE / |o->eval( itab[ sy-index ]-val ).            { elapsed NUMBER = USER }|.
+
+  GET RUN TIME FIELD start.
+  DO p_count TIMES.
+    o->eval( VALUE #( itab[ sy-index ]-val ) ).
+  ENDDO.
+  GET RUN TIME FIELD end.
+  elapsed = end - start.
+  WRITE / |o->eval( value #( itab[ sy-index ]-val ) ). { elapsed NUMBER = USER }|.
+
+  GET RUN TIME FIELD start.
+  DO p_count TIMES.
+    o->copy( itab[ sy-index ]-val ).
+  ENDDO.
+  GET RUN TIME FIELD end.
+  elapsed = end - start.
+  WRITE / |o->copy( itab[ sy-index ]-val ).            { elapsed NUMBER = USER }|.
+
+  GET RUN TIME FIELD start.
+  DO p_count TIMES.
+    o->copy( VALUE #( itab[ sy-index ]-val ) ).
+  ENDDO.
+  GET RUN TIME FIELD end.
+  elapsed = end - start.
+  WRITE / |o->copy( value #( itab[ sy-index ]-val ) ). { elapsed NUMBER = USER }|.
